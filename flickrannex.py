@@ -19,6 +19,7 @@ if "--dbglevel" in sys.argv:
     dbglevel = int(sys.argv[sys.argv.index("--dbglevel") + 1])
 else:
     dbglevel = 0
+dbglevel = 10
 
 import CommonFunctions as common
 import flickrapi
@@ -74,6 +75,9 @@ def postFile(subject, filename, folder):
 
 def checkFile(subject, folder):
     common.log(subject + " - " + repr(folder) + " - " + repr(user_id))
+    if not isinstance(folder, int):
+        common.log("No set exists, thus no files exists")
+        return False
 
     file = False
     photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500)
