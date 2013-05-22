@@ -43,8 +43,23 @@ def login(uname, pword):
     user_id = user_id[0].attrib["nsid"]
     common.log("Done: " + repr(token) + " - " + repr(frob) + " - " + repr(user_id))
 
+def verifyFileType(filename):
+    common.log(filename)
+    status = False
+    fname, ext = os.path.splitext(os.path.basename(filename))
+    if ext.lower() in [".avi", ".mkv", ".mp4", ".3gp", ".wmv", ".asf", ".jpg", ".jpeg", ".gif", ".png"]:
+        common.log("Filetype can be uploaded: " + ext)
+        status = True
+
+    common.log("Done: " + repr(status))
+    return status
+
 def postFile(subject, filename, folder):
     common.log("%s to %s - %s" % ( filename, repr(folder), subject))
+    if not conf["encrypted"] and not verifyFileType(filename):
+        common.log("Unencrypted flickr can only accept picture and video files")
+        sys.exit(1)
+        
     def func(progress, done):
         common.log("func: %s - %s" % (repr(progress), repr(done)))
         if done:
@@ -54,22 +69,30 @@ def postFile(subject, filename, folder):
 
     width, height, pixels, meta, text = png.Reader(filename=pwd + "/logo_small.png").read()
 
-    f = open(pwd + "/temp/encoded-" + subject, 'wb')
-    text = readFile(filename, "rb")
-    text = base64.b64encode(text)
+    if conf["encrypted"]:
+        tfile = pwd + "/temp/encoded-" + subject
+        f = open(tfile, 'wb')
+        text = readFile(filename, "rb")
+        text = base64.b64encode(text)
     
-    w = png.Writer(width, height, text={"data": text})
-    w.write(f, pixels)
-    f.close()
+        w = png.Writer(width, height, text={"data": text})
+        w.write(f, pixels)
+        f.close()
+    else:
+        tfile = filename
+        #subject = os.path.basename(filename)
+        description = os.path.basename(filename)
+    common.log("Uploading: " + tfile)
 
-    res = flickr.upload(filename=pwd + "/temp/encoded-" + subject, is_public=0, title=subject, description=folder, callback=func)
+    res = flickr.upload(filename=tfile, is_public=0, title=subject, description=description, callback=func)
     if res:
         if isinstance(folder, int):
             flickr.photosets_addPhoto(photoset_id=folder, photo_id=res[0].text)
         else:
             flickr.photosets_create(title=folder, primary_photo_id=res[0].text)
 
-    os.unlink(pwd + "/temp/encoded-" + subject)
+    if conf["encrypted"]:
+        os.unlink(pwd + "/temp/encoded-" + subject)
     if res:
         common.log("Done: " + repr(res))
     else:
@@ -81,8 +104,13 @@ def checkFile(subject, folder):
         common.log("No set exists, thus no files exists")
         return False
 
+    org_sub = subject
+    #if not conf["encrypted"] and False:
+    #    subject = os.path.basename(filename)
+
     file = False
     photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500)
+
     for s in photos.find('photoset').findall('photo'):
         title = s.attrib["title"]
         common.log("Found title: " + repr(title), 3)
@@ -92,12 +120,15 @@ def checkFile(subject, folder):
 
     if file:
         common.log("Found: " + repr(file))
-        print(subject)
+        print(org_sub)
     else:
         common.log("Failure")
 
 def getFile(subject, filename, folder):
     common.log(subject)
+
+    if not conf["encrypted"] and False:
+        subject = os.path.basename(filename)
 
     file = False
     photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500)
@@ -131,6 +162,9 @@ def getFile(subject, filename, folder):
 
 def deleteFile(subject, folder):
     common.log(subject)
+
+    if not conf["encrypted"] and False:
+        subject = os.path.basename(filename)
 
     file = False
     photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500)
@@ -202,20 +236,27 @@ def main():
     except Exception as e:
         common.log("Traceback EXCEPTION: " + repr(e))
         common.log("Couldn't parse conf: " + repr(conf))
-        conf = {"uname": "", "folder": "gitannex", "pword": ""}
+        conf = {}
 
     common.log("Conf: " + repr(conf), 2)
     changed = False
-    if "uname" not in conf or conf["uname"] == "":
+    if "uname" not in conf:
         conf["uname"] = raw_input("Please enter your flickr email address: ")
         common.log("e-mail set to: " + conf["uname"])
         changed = True
 
-    if "pword" not in conf or conf["pword"] == "":
+    if "pword" not in conf:
         conf["pword"] = raw_input("Please enter your flickr password: ")
         common.log("password set to: " + conf["pword"], 3)
         changed = True
 
+    if "encrypted" not in conf:
+        conf["encrypted"] = "?"
+        while (conf["encrypted"].lower().find("y") == -1 and conf["encrypted"].lower().find("n") == -1 ):
+            conf["encrypted"] = raw_input("Should uploaded files be encryptes [yes/no]: ")
+        conf["encrypted"] = conf["encrypted"].lower().find("y") > -1
+        common.log("encryption set to: " + repr(conf["encrypted"]))
+        changed = True
 
     login(conf["uname"], conf["pword"])
     ANNEX_FOLDER = conf["folder"]
@@ -236,6 +277,16 @@ def main():
     elif changed:
         if user_id:
             print("Program sucessfully setup")
+            if conf["encrypted"]:
+                encryption = "shared"
+            else:
+                encryption = "none"
+            setup = '''Please run the following command in your annex directory
+git config annex.flickr-hook '/usr/bin/python2 %s/flickrannex.py'
+git annex initremote flickr type=hook hooktype=flickr encryption=%s
+git annex describe flickr "the flickr library"
+''' % (pwd, encryption)
+            print setup
             common.log("Saving flickrannex.conf", 0)
             saveFile(pwd + "/flickrannex.conf", json.dumps(conf))
         else:

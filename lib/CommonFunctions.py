@@ -115,7 +115,12 @@ def fetchPage(params={}):
 
 def log(description, level=0):
     if dbglevel > level:
+        timestamp = time.strftime("%H:%M:%S", time.localtime())
         try:
-            print((u"[%s] %s : '%s'" % (plugin, inspect.stack()[1][3], description)).decode("utf-8"))
+            data = "%s [%s] %s : '%s'" % (timestamp, plugin, inspect.stack()[1][3], description)
         except:
-            print(u"FALLBACK [%s] %s : '%s'" % (plugin, inspect.stack()[1][3], repr(description)))
+            data = "FALLBACK %s [%s] %s : '%s'" % (timestamp, plugin, inspect.stack()[1][3], repr(description))
+        if "--stderr" in sys.argv:
+            sys.stderr.write(data + "\n")
+        else:
+            print(data)
