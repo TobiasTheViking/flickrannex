@@ -30,3 +30,8 @@ Edit the flickrannex.conf file. Add your flickrusername, password and folder(set
     git config annex.flickr-hook '/usr/bin/python2 ~/flickrannex/flickrannex.py'
     git annex initremote flickr type=hook hooktype=flickr encryption=shared
     git annex describe flickr "the flickr library"
+
+## Notes
+The current version base64 encodes all the data, which results in ~35% larger filesize.
+
+I might look into yyenc instead. I'm not sure if it will work in the tEXt field.
