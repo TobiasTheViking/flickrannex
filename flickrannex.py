@@ -47,6 +47,8 @@ def verifyFileType(filename):
     common.log(filename)
     status = False
     fname, ext = os.path.splitext(os.path.basename(filename))
+    # Video gets converted to flv.
+    # pdf gets (Horribly badly) converted to jpg
     if ext.lower() in [".jpg", ".jpeg", ".gif", ".png"]:
         common.log("Filetype can be uploaded: " + ext)
         status = True
@@ -56,9 +58,6 @@ def verifyFileType(filename):
 
 def postFile(subject, filename, folder):
     common.log("%s to %s - %s" % ( filename, repr(folder), subject))
-    if not conf["encrypted"] and not verifyFileType(filename):
-        common.log("Unencrypted flickr can only accept picture and video files")
-        sys.exit(1)
         
     def func(progress, done):
         common.log("func: %s - %s" % (repr(progress), repr(done)))
@@ -80,8 +79,8 @@ def postFile(subject, filename, folder):
         f.close()
     else:
         tfile = filename
-        #subject = os.path.basename(filename)
         description = os.path.basename(filename)
+
     common.log("Uploading: " + tfile)
 
     res = flickr.upload(filename=tfile, is_public=0, title=subject, description=description, callback=func)
@@ -100,13 +99,12 @@ def postFile(subject, filename, folder):
 
 def checkFile(subject, folder):
     common.log(subject + " - " + repr(folder) + " - " + repr(user_id))
+
     if not isinstance(folder, int):
         common.log("No set exists, thus no files exists")
         return False
 
     org_sub = subject
-    #if not conf["encrypted"] and False:
-    #    subject = os.path.basename(filename)
 
     file = False
     photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500)
@@ -126,9 +124,6 @@ def checkFile(subject, folder):
 
 def getFile(subject, filename, folder):
     common.log(subject)
-
-    if not conf["encrypted"] and False:
-        subject = os.path.basename(filename)
 
     file = False
     photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500)
@@ -162,9 +157,6 @@ def getFile(subject, filename, folder):
 
 def deleteFile(subject, folder):
     common.log(subject)
-
-    if not conf["encrypted"] and False:
-        subject = os.path.basename(filename)
 
     file = False
     photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500)
@@ -265,6 +257,10 @@ def main():
     for s in sets.find('photosets').findall('photoset'):
         if s[0].text.find(conf["folder"]) > -1:
             ANNEX_FOLDER = int(s.attrib["id"])
+
+    if not conf["encrypted"] and not verifyFileType(ANNEX_KEY):
+        common.log("Unencrypted flickr can only accept picture and video files")
+        sys.exit(1)
 
     if "store" == ANNEX_ACTION:
         postFile(ANNEX_KEY, ANNEX_FILE, ANNEX_FOLDER)
