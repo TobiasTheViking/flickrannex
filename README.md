@@ -19,11 +19,9 @@ Clone the git repository in your home folder.
 This should make a ~/flickrannex folder
 
 ## Setup
-Run the program once to make an empty config file
+Run the program once to set it up.
 
     cd ~/flickrannex; python2 flickrannex.py
-
-Edit the flickrannex.conf file. Add your flickrusername, password and folder(set) name.
 
 ## Commands for gitannex:
 

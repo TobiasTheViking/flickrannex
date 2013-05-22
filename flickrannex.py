@@ -19,7 +19,6 @@ if "--dbglevel" in sys.argv:
     dbglevel = int(sys.argv[sys.argv.index("--dbglevel") + 1])
 else:
     dbglevel = 0
-dbglevel = 10
 
 import CommonFunctions as common
 import flickrapi
@@ -32,10 +31,12 @@ user_id = False
 if not os.path.exists(pwd + "/temp"):
     os.mkdir(pwd + "/temp")
 import base64
+
 def login(uname, pword):
     common.log(uname)
     (token, frob) = flickr.get_token_part_one(perms='delete')
-    if not token: raw_input("Press ENTER after you authorized this program")
+    if not token: 
+        raw_input("Press ENTER after you authorized this program")
     flickr.get_token_part_two((token, frob))
     global user_id
     user_id = flickr.people_findByEmail(find_email=uname)
@@ -45,10 +46,11 @@ def login(uname, pword):
 def postFile(subject, filename, folder):
     common.log("%s to %s - %s" % ( filename, repr(folder), subject))
     def func(progress, done):
+        common.log("func: %s - %s" % (repr(progress), repr(done)))
         if done:
-            print "Done uploading"
+            print("Done uploading")
         else:
-            print "At %s%%" % progress
+            print("At %s%%" % progress)
 
     width, height, pixels, meta, text = png.Reader(filename=pwd + "/logo_small.png").read()
 
@@ -193,10 +195,6 @@ def main():
         envargs += ["ANNEX_FILE=" + ANNEX_FILE]
     common.log("ARGS: " + repr(" ".join(envargs + args)))
 
-    if not os.path.exists(pwd + "/flickrannex.conf"):
-        saveFile(pwd + "/flickrannex.conf", json.dumps({"uname": "", "folder": "gitannex", "pword": ""}))
-        common.log("no flickrannex.conf file found. Creating empty template")
-        sys.exit(1)
 
     conf = readFile(pwd + "/flickrannex.conf")
     try:
@@ -204,13 +202,20 @@ def main():
     except Exception as e:
         common.log("Traceback EXCEPTION: " + repr(e))
         common.log("Couldn't parse conf: " + repr(conf))
-        conf = {}
+        conf = {"uname": "", "folder": "gitannex", "pword": ""}
 
     common.log("Conf: " + repr(conf), 2)
+    changed = False
+    if "uname" not in conf or conf["uname"] == "":
+        conf["uname"] = raw_input("Please enter your flickr email address: ")
+        common.log("e-mail set to: " + conf["uname"])
+        changed = True
 
-    if "uname" not in conf or "pword" not in conf or ("uname" in conf and conf["uname"] == "") or ("pword" in conf and conf["pword"] == ""):
-        common.log("No username or password found in config")
-        sys.exit(1)
+    if "pword" not in conf or conf["pword"] == "":
+        conf["pword"] = raw_input("Please enter your flickr password: ")
+        common.log("password set to: " + conf["pword"], 3)
+        changed = True
+
 
     login(conf["uname"], conf["pword"])
     ANNEX_FOLDER = conf["folder"]
@@ -228,8 +233,15 @@ def main():
         getFile(ANNEX_KEY, ANNEX_FILE, ANNEX_FOLDER)
     elif "remove" == ANNEX_ACTION:
         deleteFile(ANNEX_KEY, ANNEX_FOLDER)
+    elif changed:
+        if user_id:
+            print("Program sucessfully setup")
+            common.log("Saving flickrannex.conf", 0)
+            saveFile(pwd + "/flickrannex.conf", json.dumps(conf))
+        else:
+            print("Error during setup. Please try again")
     else:
-        common.log("ERROR")
+        print("ERROR")
         sys.exit(1)
 
 t = time.time()

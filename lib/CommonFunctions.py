@@ -28,11 +28,9 @@ import HTMLParser
 import json
 
 plugin = sys.modules["__main__"].plugin
-print plugin
+dbglevel = sys.modules["__main__"].dbglevel
 
 USERAGENT = u"Mozilla/5.0 (Windows NT 6.2; Win64; x64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1"
-
-dbglevel = 3
 
 if hasattr(sys.modules["__main__"], "opener"):
     urllib2.install_opener(sys.modules["__main__"].opener)
