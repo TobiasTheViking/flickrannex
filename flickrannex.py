@@ -47,7 +47,7 @@ def verifyFileType(filename):
     common.log(filename)
     status = False
     fname, ext = os.path.splitext(os.path.basename(filename))
-    if ext.lower() in [".avi", ".mkv", ".mp4", ".3gp", ".wmv", ".asf", ".jpg", ".jpeg", ".gif", ".png"]:
+    if ext.lower() in [".jpg", ".jpeg", ".gif", ".png"]:
         common.log("Filetype can be uploaded: " + ext)
         status = True
 
