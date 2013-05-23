@@ -83,7 +83,7 @@ def postFile(subject, filename, folder):
 
     common.log("Uploading: " + tfile)
 
-    res = flickr.upload(filename=tfile, is_public=0, title=subject, description=tfile, callback=func)
+    res = flickr.upload(filename=tfile, is_public=0, title=subject, description=os.path.basename(tfile), callback=func)
     if res:
         if isinstance(folder, int):
             flickr.photosets_addPhoto(photoset_id=folder, photo_id=res[0].text)
