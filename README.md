@@ -37,5 +37,3 @@ The real name of the picture will be in the description.
 The current version base64 encodes all the data, which results in ~35% larger filesize.
 
 I might look into yyenc instead. I'm not sure if it will work in the tEXt field.
-
--- Tobias
