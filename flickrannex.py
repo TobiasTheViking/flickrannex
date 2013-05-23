@@ -281,7 +281,7 @@ def main():
 git config annex.flickr-hook '/usr/bin/python2 %s/flickrannex.py'
 git annex initremote flickr type=hook hooktype=flickr encryption=%s
 git annex describe flickr "the flickr library"
-''' % (pwd, encryption)
+''' % (os.getcwd(), encryption)
             print setup
             common.log("Saving flickrannex.conf", 0)
             saveFile(pwd + "/flickrannex.conf", json.dumps(conf))
