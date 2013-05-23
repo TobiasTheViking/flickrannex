@@ -228,7 +228,7 @@ def main():
     except Exception as e:
         common.log("Traceback EXCEPTION: " + repr(e))
         common.log("Couldn't parse conf: " + repr(conf))
-        conf = {}
+        conf = {"folder": "gitannex"}
 
     common.log("Conf: " + repr(conf), 2)
     changed = False
