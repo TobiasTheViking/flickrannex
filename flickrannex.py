@@ -24,8 +24,9 @@ import CommonFunctions as common
 import flickrapi
 import png
 
-api_key = 'e431589a186b0a83dcc2df1e30cfa7f7'
-api_secret = 'd78fc11e3a8832ef'
+api_key = "2f6b468927a824c00b33c4672b10d24e"
+api_secret = "e28467365581abd4"
+
 flickr = flickrapi.FlickrAPI(api_key, api_secret)
 user_id = False
 if not os.path.exists(pwd + "/temp"):
@@ -79,11 +80,10 @@ def postFile(subject, filename, folder):
         f.close()
     else:
         tfile = filename
-        description = os.path.basename(filename)
 
     common.log("Uploading: " + tfile)
 
-    res = flickr.upload(filename=tfile, is_public=0, title=subject, description=description, callback=func)
+    res = flickr.upload(filename=tfile, is_public=0, title=subject, description=tfile, callback=func)
     if res:
         if isinstance(folder, int):
             flickr.photosets_addPhoto(photoset_id=folder, photo_id=res[0].text)
