@@ -6,8 +6,8 @@ import time
 import inspect
 
 conf = False
-
-plugin = "flickrannex"
+version = "0.1.0"
+plugin = "flickrannex-" + version
 
 pwd = os.path.dirname(__file__)
 if not pwd:
@@ -68,6 +68,11 @@ def postFile(subject, filename, folder):
             print("At %s%%" % progress)
 
     width, height, pixels, meta, text = png.Reader(filename=pwd + "/logo_small.png").read()
+    upper_limit = 40234050
+    common.log("pre %s size: %s more than %s." % ( filename, os.path.getsize(filename), upper_limit))
+    if os.path.getsize(filename) > upper_limit:
+        common.log("%s size: %s more than %s. Skipping" % ( filename, os.path.getsize(filename), upper_limit))
+        sys.exit(1)
 
     if conf["encrypted"]:
         tfile = pwd + "/temp/encoded-" + subject
@@ -156,13 +161,13 @@ def getFile(subject, filename, folder):
 
 
 def deleteFile(subject, folder):
-    common.log(subject)
+    common.log(subject + " - " + repr(folder))
 
     file = False
     photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500)
     for s in photos.find('photoset').findall('photo'):
         title = s.attrib["title"]
-        common.log("Found title: " + repr(title), 3)
+        common.log("Found title: " + repr(title), 0)
         if title == subject:
             file = s.attrib["id"]
             break
@@ -252,11 +257,14 @@ def main():
 
     login(conf["uname"], conf["pword"])
     ANNEX_FOLDER = conf["folder"]
-    sets = flickr.photosets_getList(user_id=user_id, per_page=500)
+    #sets = flickr.photosets_getList(user_id=user_id, per_page=500, format="json")
+    sets = flickr.photosets_getList(per_page=500)
     # Handle multiple pages sanely
     for s in sets.find('photosets').findall('photoset'):
         if s[0].text.find(conf["folder"]) > -1:
+            common.log("Photoset %s found: %s" % (conf["folder"], repr(s)))
             ANNEX_FOLDER = int(s.attrib["id"])
+            break
 
     if not conf["encrypted"] and not verifyFileType(ANNEX_KEY):
         common.log("Unencrypted flickr can only accept picture and video files")
