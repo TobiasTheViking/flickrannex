@@ -6,7 +6,7 @@ import time
 import inspect
 
 conf = False
-version = "0.1.0"
+version = "0.1.1"
 plugin = "flickrannex-" + version
 
 pwd = os.path.dirname(__file__)
