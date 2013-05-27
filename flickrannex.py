@@ -6,7 +6,7 @@ import time
 import inspect
 
 conf = False
-version = "0.1.0"
+version = "0.1.1"
 plugin = "flickrannex-" + version
 
 pwd = os.path.dirname(__file__)
@@ -238,6 +238,7 @@ def main():
     common.log("Conf: " + repr(conf), 2)
     changed = False
     if "uname" not in conf:
+        print("Please make sure your email address has been associated flickr.")
         conf["uname"] = raw_input("Please enter your flickr email address: ")
         common.log("e-mail set to: " + conf["uname"])
         changed = True
