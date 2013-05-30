@@ -1,5 +1,5 @@
-# TODO
-  - Use	filename instead of git-annex filename for unencrypted. [Needs new hook interface]
+# Version 0.1.4
+  - Implement pagination on flickr(handle more than 500 sets/photos)
 
 # Version 0.1.3
   - Fix issue #4

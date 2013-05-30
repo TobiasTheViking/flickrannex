@@ -6,7 +6,7 @@ import time
 import inspect
 
 conf = False
-version = "0.1.3"
+version = "0.1.4"
 plugin = "flickrannex-" + version
 
 pwd = os.path.dirname(__file__)
@@ -112,13 +112,22 @@ def checkFile(subject, folder):
     org_sub = subject
 
     file = False
-    photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500)
-
-    for s in photos.find('photoset').findall('photo'):
-        title = s.attrib["title"]
-        common.log("Found title: " + repr(title), 3)
-        if title == subject:
-            file = title
+    page=0
+    while not file:
+        photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500)
+        photos = photos.find("photoset")
+        for s in photos.findall('photo'):
+            title = s.attrib["title"]
+            common.log("Found title: " + repr(title), 3)
+            if title == subject:
+                file = title
+                break
+        if int(photos.attrib["pages"]) > page:
+            page +=1
+            common.log("Trying page: " + repr(page))
+        else:
+            common.log("Error. found nothing:" + repr(photos))
+            common.log("Error. found nothing:" + repr(photos.attrib))
             break
 
     if file:
@@ -131,12 +140,23 @@ def getFile(subject, filename, folder):
     common.log(subject)
 
     file = False
-    photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500)
-    for s in photos.find('photoset').findall('photo'):
-        title = s.attrib["title"]
-        common.log("Found title: " + repr(title), 3)
-        if title == subject:
-            file = s.attrib["id"]
+    page=0
+    while not file:
+        photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500, page=page)
+        photos = photos.find("photoset")
+        for s in photos.findall('photo'):
+            title = s.attrib["title"]
+            common.log("Found title: " + repr(title), 2)
+            if title == subject:
+                common.log("Found title2: " + repr(title), 0)
+                file = s.attrib["id"]
+                break
+        if int(photos.attrib["pages"]) > page:
+            page +=1
+            common.log("Trying page: " + repr(page))
+        else:
+            common.log("Error. found nothing:" + repr(photos))
+            common.log("Error. found nothing:" + repr(photos.attrib))
             break
 
     if file:
@@ -151,9 +171,7 @@ def getFile(subject, filename, folder):
         if "encrypted" in conf and conf["encrypted"]:
             r=png.Reader(bytes=res["content"])
             width, height, pixels, meta, text = r.read()
-            common.log("BLA: " + repr(text)[0:20])
             text = base64.b64decode(text["data"])
-            common.log("BLA: " + repr(text)[0:20])
             saveFile(filename, text, "wb")
         else:
             saveFile(filename, res["content"], "wb")
@@ -167,12 +185,22 @@ def deleteFile(subject, folder):
     common.log(subject + " - " + repr(folder))
 
     file = False
-    photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500)
-    for s in photos.find('photoset').findall('photo'):
-        title = s.attrib["title"]
-        common.log("Found title: " + repr(title), 0)
-        if title == subject:
-            file = s.attrib["id"]
+    page=0
+    while not file:
+        photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500)
+        photos = photos.find('photoset')
+        for s in photos.findall('photo'):
+            title = s.attrib["title"]
+            common.log("Found title: " + repr(title), 0)
+            if title == subject:
+                file = s.attrib["id"]
+                break
+        if int(photos.attrib["pages"]) > page:
+            page +=1
+            common.log("Trying page: " + repr(page))
+        else:
+            common.log("Error. found nothing:" + repr(photos))
+            common.log("Error. found nothing:" + repr(photos.attrib))
             break
 
     common.log("file: " + repr(file))
@@ -261,15 +289,22 @@ def main():
 
     login(conf["uname"], conf["pword"])
     ANNEX_FOLDER = conf["folder"]
-    #sets = flickr.photosets_getList(user_id=user_id, per_page=500, format="json")
-    sets = flickr.photosets_getList(per_page=500)
-    # Handle multiple pages sanely
-    for s in sets.find('photosets').findall('photoset'):
-        if s[0].text.find(conf["folder"]) > -1:
-            common.log("Photoset %s found: %s" % (conf["folder"], repr(s)))
-            ANNEX_FOLDER = int(s.attrib["id"])
+    page=0
+    while ANNEX_FOLDER == conf["folder"]:
+        sets = flickr.photosets_getList(per_page=500)
+        sets = sets.find('photosets')
+        for s in sets.findall('photoset'):
+            if s[0].text == conf["folder"]:
+                common.log("Photoset %s found: %s" % (s[0].text, repr(s)))
+                ANNEX_FOLDER = int(s.attrib["id"])
+                break
+        if int(sets.attrib["pages"]) > page:
+            page +=1
+            common.log("Trying page: " + repr(page))
+        else:
+            common.log("Error. found nothing:" + repr(sets.attrib))
             break
-
+        
     if not conf["encrypted"] and ANNEX_KEY and not verifyFileType(ANNEX_KEY):
         common.log("Unencrypted flickr can only accept picture and video files")
         sys.exit(1)
