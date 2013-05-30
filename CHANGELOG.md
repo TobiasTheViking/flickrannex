@@ -1,6 +1,9 @@
 # TODO
   - Use	filename instead of git-annex filename for unencrypted. [Needs new hook interface]
 
+# Version 0.1.3
+  - Fix issue #4
+
 # Version 0.1.2
   - Add "associated" message when asking for flickr login credentials
 

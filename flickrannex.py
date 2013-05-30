@@ -6,7 +6,7 @@ import time
 import inspect
 
 conf = False
-version = "0.1.2"
+version = "0.1.3"
 plugin = "flickrannex-" + version
 
 pwd = os.path.dirname(__file__)
@@ -148,12 +148,15 @@ def getFile(subject, filename, folder):
         
         res = common.fetchPage({"link": url.attrib["source"]})
 
-        r=png.Reader(bytes=res["content"])
-        width, height, pixels, meta, text = r.read()
-        common.log("BLA: " + repr(text)[0:20])
-        text = base64.b64decode(text["data"])
-        common.log("BLA: " + repr(text)[0:20])
-        saveFile(filename, text, "wb")
+        if "encrypted" in conf and conf["encrypted"]:
+            r=png.Reader(bytes=res["content"])
+            width, height, pixels, meta, text = r.read()
+            common.log("BLA: " + repr(text)[0:20])
+            text = base64.b64decode(text["data"])
+            common.log("BLA: " + repr(text)[0:20])
+            saveFile(filename, text, "wb")
+        else:
+            saveFile(filename, res["content"], "wb")
 
         common.log("Done")
     else:
@@ -286,7 +289,9 @@ def main():
                 encryption = "shared"
             else:
                 encryption = "none"
-            setup = '''Please run the following command in your annex directory
+            setup = '''
+Please run the following commands in your annex directory:
+
 git config annex.flickr-hook '/usr/bin/python2 %s/flickrannex.py'
 git annex initremote flickr type=hook hooktype=flickr encryption=%s
 git annex describe flickr "the flickr library"
