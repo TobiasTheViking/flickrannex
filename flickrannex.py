@@ -6,7 +6,7 @@ import time
 import inspect
 
 conf = False
-version = "0.1.4"
+version = "0.1.5"
 plugin = "flickrannex-" + version
 
 pwd = os.path.dirname(__file__)
@@ -307,6 +307,10 @@ def main():
         
     if not conf["encrypted"] and ANNEX_KEY and not verifyFileType(ANNEX_KEY):
         common.log("Unencrypted flickr can only accept picture and video files")
+        sys.exit(1)
+
+    if ANNEX_FILE and os.path.getsize(ANNEX_FILE) > 31457280:
+        common.log("flickr won't accept files larger than ~30mb")
         sys.exit(1)
 
     if "store" == ANNEX_ACTION:

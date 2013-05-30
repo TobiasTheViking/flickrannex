@@ -1,3 +1,6 @@
+# Version 0.1.5
+  - Exit on files larger than 30mb.
+
 # Version 0.1.4
   - Implement pagination on flickr(handle more than 500 sets/photos)
 
