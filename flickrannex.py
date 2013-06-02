@@ -309,7 +309,7 @@ def main():
         common.log("Unencrypted flickr can only accept picture and video files")
         sys.exit(1)
 
-    if ANNEX_FILE and os.path.getsize(ANNEX_FILE) > 31457280:
+    if ANNEX_FILE and os.path.exists(ANNEX_FILE) and os.path.getsize(ANNEX_FILE) > 31457280:
         common.log("flickr won't accept files larger than ~30mb")
         sys.exit(1)
 
