@@ -336,6 +336,7 @@ Please run the following commands in your annex directory:
 git config annex.flickr-hook '/usr/bin/python2 %s/flickrannex.py'
 git annex initremote flickr type=hook hooktype=flickr encryption=%s
 git annex describe flickr "the flickr library"
+git annex content flickr exclude=largerthan=30mb
 ''' % (os.getcwd(), encryption)
             print setup
             common.log("Saving flickrannex.conf", 0)
