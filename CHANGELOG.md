@@ -1,5 +1,9 @@
+# Version 0.1.6
+  - Fix pagination error
+  - Print certain error messages even with debug disabled.
+
 # Version 0.1.5
-  - Exit on files larger than 30mb.
+  - Exit on files larger than 30mb
 
 # Version 0.1.4
   - Implement pagination on flickr(handle more than 500 sets/photos)
@@ -14,4 +18,4 @@
   - Fix issue #2 (can't get through configuration, if I choose not to encrypt files)
 
 # Version 0.1.0
-  - Fix folder issue by no longer providing user_id.
+  - Fix folder issue by no longer providing user_id

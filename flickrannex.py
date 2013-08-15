@@ -6,7 +6,7 @@ import time
 import inspect
 
 conf = False
-version = "0.1.5"
+version = "0.1.6"
 plugin = "flickrannex-" + version
 
 pwd = os.path.dirname(__file__)
@@ -33,11 +33,15 @@ if not os.path.exists(pwd + "/temp"):
     os.mkdir(pwd + "/temp")
 import base64
 
-def login(uname, pword):
+def login(uname):
     common.log(uname)
     (token, frob) = flickr.get_token_part_one(perms='delete')
     if not token: 
-        raw_input("Press ENTER after you authorized this program")
+        try:
+            raw_input("Press ENTER after you authorized this program")
+        except Exception as e:
+            common.log("Sleeping for 60s while waiting for user to authorize program: " + repr(e))
+            time.sleep(60)
     flickr.get_token_part_two((token, frob))
     global user_id
     user_id = flickr.people_findByEmail(find_email=uname)
@@ -71,7 +75,7 @@ def postFile(subject, filename, folder):
     upper_limit = 40234050
     common.log("pre %s size: %s more than %s." % ( filename, os.path.getsize(filename), upper_limit))
     if os.path.getsize(filename) > upper_limit:
-        common.log("%s size: %s more than %s. Skipping" % ( filename, os.path.getsize(filename), upper_limit))
+        print("%s size: %s more than %s. Skipping" % ( filename, os.path.getsize(filename), upper_limit))
         sys.exit(1)
 
     if conf["encrypted"]:
@@ -89,7 +93,7 @@ def postFile(subject, filename, folder):
     common.log("Uploading: " + tfile)
 
     res = flickr.upload(filename=tfile, is_public=0, title=subject, description=os.path.basename(tfile), callback=func)
-    if res:
+    if len(res):
         if isinstance(folder, int):
             flickr.photosets_addPhoto(photoset_id=folder, photo_id=res[0].text)
         else:
@@ -97,9 +101,11 @@ def postFile(subject, filename, folder):
 
     if conf["encrypted"]:
         os.unlink(pwd + "/temp/encoded-" + subject)
-    if res:
+
+    if len(res):
         common.log("Done: " + repr(res))
     else:
+        print("Failed to store: " + repr(res))
         sys.exit(1)
 
 def checkFile(subject, folder):
@@ -112,9 +118,9 @@ def checkFile(subject, folder):
     org_sub = subject
 
     file = False
-    page=0
+    page=1
     while not file:
-        photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500)
+        photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500, page=page)
         photos = photos.find("photoset")
         for s in photos.findall('photo'):
             title = s.attrib["title"]
@@ -126,8 +132,8 @@ def checkFile(subject, folder):
             page +=1
             common.log("Trying page: " + repr(page))
         else:
-            common.log("Error. found nothing:" + repr(photos))
-            common.log("Error. found nothing:" + repr(photos.attrib))
+            common.log("Error, found nothing:" + repr(photos))
+            common.log("Error, found nothing:" + repr(photos.attrib))
             break
 
     if file:
@@ -135,12 +141,13 @@ def checkFile(subject, folder):
         print(org_sub)
     else:
         common.log("Failure")
+        return False
 
 def getFile(subject, filename, folder):
     common.log(subject)
 
     file = False
-    page=0
+    page=1
     while not file:
         photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500, page=page)
         photos = photos.find("photoset")
@@ -151,9 +158,9 @@ def getFile(subject, filename, folder):
                 common.log("Found title2: " + repr(title), 0)
                 file = s.attrib["id"]
                 break
-        if int(photos.attrib["pages"]) > page:
+        if int(photos.attrib["total"]) > page:
             page +=1
-            common.log("Trying page: " + repr(page))
+            common.log("Trying page: " + repr(page) + " - " + repr(photos.attrib))
         else:
             common.log("Error. found nothing:" + repr(photos))
             common.log("Error. found nothing:" + repr(photos.attrib))
@@ -185,7 +192,7 @@ def deleteFile(subject, folder):
     common.log(subject + " - " + repr(folder))
 
     file = False
-    page=0
+    page=1
     while not file:
         photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500)
         photos = photos.find('photoset')
@@ -274,11 +281,6 @@ def main():
         common.log("e-mail set to: " + conf["uname"])
         changed = True
 
-    if "pword" not in conf:
-        conf["pword"] = raw_input("Please enter your flickr password: ")
-        common.log("password set to: " + conf["pword"], 3)
-        changed = True
-
     if "encrypted" not in conf:
         conf["encrypted"] = "?"
         while (conf["encrypted"].lower().find("y") == -1 and conf["encrypted"].lower().find("n") == -1 ):
@@ -287,9 +289,9 @@ def main():
         common.log("encryption set to: " + repr(conf["encrypted"]))
         changed = True
 
-    login(conf["uname"], conf["pword"])
+    login(conf["uname"])
     ANNEX_FOLDER = conf["folder"]
-    page=0
+    page=1
     while ANNEX_FOLDER == conf["folder"]:
         sets = flickr.photosets_getList(per_page=500)
         sets = sets.find('photosets')
@@ -306,11 +308,11 @@ def main():
             break
         
     if not conf["encrypted"] and ANNEX_KEY and not verifyFileType(ANNEX_KEY):
-        common.log("Unencrypted flickr can only accept picture and video files")
+        print("Unencrypted flickr can only accept picture and video files")
         sys.exit(1)
 
     if ANNEX_FILE and os.path.exists(ANNEX_FILE) and os.path.getsize(ANNEX_FILE) > 31457280:
-        common.log("flickr won't accept files larger than ~30mb")
+        print("flickr won't accept files larger than ~30mb")
         sys.exit(1)
 
     if "store" == ANNEX_ACTION:

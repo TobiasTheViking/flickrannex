@@ -31,10 +31,13 @@ After the setup has finished, it will print the git-annex configure lines.
 ## Unencrypted mode
 The photo name on flickr is currently the GPGHMACSHA1 version.
 
+Run the following command in your annex directory
+   git annex content flickr uuid include=*.jpg or include=*.jpeg or include=*.gif or include=*.png
+
 ## Encrypted mode
 The current version base64 encodes all the data, which results in ~35% larger filesize.
 
 I might look into yyenc instead. I'm not sure if it will work in the tEXt field.
 
-# Todo
-Pagination.
+Run the following command in your annex directory
+   git annex content flickr exclude=largerthan=30mb
