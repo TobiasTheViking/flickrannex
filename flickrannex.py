@@ -6,7 +6,7 @@ import time
 import inspect
 
 conf = False
-version = "0.1.6"
+version = "0.1.7"
 plugin = "flickrannex-" + version
 
 pwd = os.path.dirname(__file__)
@@ -19,6 +19,11 @@ if "--dbglevel" in sys.argv:
     dbglevel = int(sys.argv[sys.argv.index("--dbglevel") + 1])
 else:
     dbglevel = 0
+
+if "--directories-as-tags" in sys.argv:
+    dirtags = 1
+else:
+    dirtags = 0
 
 import CommonFunctions as common
 import flickrapi
@@ -61,9 +66,12 @@ def verifyFileType(filename):
     common.log("Done: " + repr(status))
     return status
 
-def postFile(subject, filename, folder):
+def postFile(subject, filename, folder, git_top_level):
     common.log("%s to %s - %s" % ( filename, repr(folder), subject))
-        
+
+    if git_top_level:
+        common.log("git top level directory: %s" % git_top_level)
+
     def func(progress, done):
         common.log("func: %s - %s" % (repr(progress), repr(done)))
         if done:
@@ -90,9 +98,29 @@ def postFile(subject, filename, folder):
     else:
         tfile = filename
 
+    # If we want to use directories as tags...
+    tags = []
+    if dirtags:
+        dirpath = os.path.relpath(os.path.dirname(tfile), git_top_level)
+
+        # Thank you StackOverflow
+        #   http://stackoverflow.com/questions/3167154/how-to-split-a-dos-path-into-its-components-in-python
+        while 1:
+            dirpath,dir = os.path.split(dirpath)
+
+            if dir != "":
+                tags.append(dir)
+            else:
+                break
+
+        common.log("Tags added to photo" + '"' + '" "'.join(tags) + '"')
+
     common.log("Uploading: " + tfile)
 
-    res = flickr.upload(filename=tfile, is_public=0, title=subject, description=os.path.basename(tfile), callback=func)
+    res = flickr.upload(filename=tfile, is_public=0, title=subject,
+                        description=os.path.basename(tfile), tags = '"' + '" "'.join(tags) + '"',
+                        callback=func)
+
     if len(res):
         if isinstance(folder, int):
             flickr.photosets_addPhoto(photoset_id=folder, photo_id=res[0].text)
@@ -251,6 +279,8 @@ def main():
     ANNEX_HASH_1 = os.getenv("ANNEX_HASH_1")
     ANNEX_HASH_2 = os.getenv("ANNEX_HASH_2")
     ANNEX_FILE = os.getenv("ANNEX_FILE")
+    GIT_TOP_LEVEL = os.getenv("GIT_TOP_LEVEL")
+
     envargs = []
     if ANNEX_ACTION:
         envargs += ["ANNEX_ACTION=" + ANNEX_ACTION]
@@ -262,6 +292,8 @@ def main():
         envargs += ["ANNEX_HASH_2=" + ANNEX_HASH_2]
     if ANNEX_FILE:
         envargs += ["ANNEX_FILE=" + ANNEX_FILE]
+    if GIT_TOP_LEVEL:
+        envargs += ["GIT_TOP_LEVEL=" + GIT_TOP_LEVEL]
     common.log("ARGS: " + repr(" ".join(envargs + args)))
 
 
@@ -284,7 +316,7 @@ def main():
     if "encrypted" not in conf:
         conf["encrypted"] = "?"
         while (conf["encrypted"].lower().find("y") == -1 and conf["encrypted"].lower().find("n") == -1 ):
-            conf["encrypted"] = raw_input("Should uploaded files be encryptes [yes/no]: ")
+            conf["encrypted"] = raw_input("Should uploaded files be encrypted [yes/no]: ")
         conf["encrypted"] = conf["encrypted"].lower().find("y") > -1
         common.log("encryption set to: " + repr(conf["encrypted"]))
         changed = True
@@ -316,7 +348,7 @@ def main():
         sys.exit(1)
 
     if "store" == ANNEX_ACTION:
-        postFile(ANNEX_KEY, ANNEX_FILE, ANNEX_FOLDER)
+        postFile(ANNEX_KEY, ANNEX_FILE, ANNEX_FOLDER, GIT_TOP_LEVEL)
     elif "checkpresent" == ANNEX_ACTION:
         checkFile(ANNEX_KEY, ANNEX_FOLDER)
     elif "retrieve" == ANNEX_ACTION:
@@ -334,6 +366,9 @@ def main():
 Please run the following commands in your annex directory:
 
 git config annex.flickr-hook '/usr/bin/python2 %s/flickrannex.py'
+            OR  if you want to use your directories as tags
+git config annex.flickr-hook 'GIT_TOP_LEVEL=`git rev-parse --show-toplevel` /usr/bin/python2 %s/flickrannex.py --directories-as-tags'
+
 git annex initremote flickr type=hook hooktype=flickr encryption=%s
 git annex describe flickr "the flickr library"
 git annex content flickr exclude=largerthan=30mb

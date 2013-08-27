@@ -41,3 +41,12 @@ I might look into yyenc instead. I'm not sure if it will work in the tEXt field.
 
 Run the following command in your annex directory
    git annex content flickr exclude=largerthan=30mb
+
+## Including directories as tags
+Get get each of the directories below the top level git directory added as tags to uploads:
+   git config annex.flickr-hook 'GIT_TOP_LEVEL=`git rev-parse --show-toplevel` /usr/bin/python2 %s/flickrannex.py --directories-as-tags'
+
+In this case the image:
+   /home/me/annex-photos/holidays/2013/Greenland/img001.jpg
+would get the following tags:  "holidays" "2013" "Greenland"
+(assuming "/home/me/annex-photos" is the top level in the annex...)
