@@ -52,4 +52,4 @@ In this case the image:
 would get the following tags:  "holidays" "2013" "Greenland"
 (assuming "/home/me/annex-photos" is the top level in the annex...)
 
-Please note that this will only work properly for direct mode repositories.
+Caveat Emptor - Tags will *always* be NULL for indirect repos - we don't (easily) know the human-readable file name.
