@@ -112,6 +112,12 @@ def postFile(subject, filename, folder, git_top_level):
             else:
                 break
 
+        # Handle the case of indirect repos
+        #  - indirect repos have ".git" as the first subdirectory (never will happen for a direct repo)
+        #  - this will mean that don't know what the filename is in that case, so don't use any tags
+        if (len(tags) > 0) and (tags[len(tags) - 1] == ".git"):
+            tags = []
+
         common.log("Tags added to photo" + '"' + '" "'.join(tags) + '"')
 
     common.log("Uploading: " + tfile)
