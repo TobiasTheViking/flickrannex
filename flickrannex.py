@@ -74,14 +74,13 @@ def postFile(subject, filename, folder, git_top_level):
 
     def func(progress, done):
         common.log("func: %s - %s" % (repr(progress), repr(done)))
-        if done:
+        if len(done):
             print("Done uploading")
         else:
             print("At %s%%" % progress)
 
     width, height, pixels, meta, text = png.Reader(filename=pwd + "/logo_small.png").read()
     upper_limit = 40234050
-    common.log("pre %s size: %s more than %s." % ( filename, os.path.getsize(filename), upper_limit))
     if os.path.getsize(filename) > upper_limit:
         print("%s size: %s more than %s. Skipping" % ( filename, os.path.getsize(filename), upper_limit))
         sys.exit(1)
