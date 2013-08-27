@@ -354,7 +354,7 @@ def main():
         getFile(ANNEX_KEY, ANNEX_FILE, ANNEX_FOLDER)
     elif "remove" == ANNEX_ACTION:
         deleteFile(ANNEX_KEY, ANNEX_FOLDER)
-    elif changed:
+    elif changed or True:
         if user_id:
             print("Program sucessfully setup")
             if conf["encrypted"]:
@@ -365,13 +365,14 @@ def main():
 Please run the following commands in your annex directory:
 
 git config annex.flickr-hook '/usr/bin/python2 %s/flickrannex.py'
-            OR  if you want to use your directories as tags
+
+# If you have a direct mode repository and want to use your directores as tags, use this hook instead
 git config annex.flickr-hook 'GIT_TOP_LEVEL=`git rev-parse --show-toplevel` /usr/bin/python2 %s/flickrannex.py --directories-as-tags'
 
 git annex initremote flickr type=hook hooktype=flickr encryption=%s
 git annex describe flickr "the flickr library"
 git annex content flickr exclude=largerthan=30mb
-''' % (os.getcwd(), encryption)
+''' % (os.getcwd(), os.getcwd(), encryption)
             print setup
             common.log("Saving flickrannex.conf", 0)
             saveFile(pwd + "/flickrannex.conf", json.dumps(conf))
