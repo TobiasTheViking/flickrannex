@@ -330,6 +330,7 @@ def main():
     ANNEX_FOLDER = conf["folder"]
     page=1
     while ANNEX_FOLDER == conf["folder"]:
+        common.log("Photoset %s searching for %s" % (repr(ANNEX_FOLDER), repr(conf["folder"])))
         sets = flickr.photosets_getList(per_page=500)
         sets = sets.find('photosets')
         for s in sets.findall('photoset'):
