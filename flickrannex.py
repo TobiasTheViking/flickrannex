@@ -333,8 +333,9 @@ def main():
         sets = flickr.photosets_getList(per_page=500)
         sets = sets.find('photosets')
         for s in sets.findall('photoset'):
+            common.log("Photoset %s found: %s" % (s[0].text, repr(s)))
             if s[0].text == conf["folder"]:
-                common.log("Photoset %s found: %s" % (s[0].text, repr(s)))
+                common.log("Photoset %s found: %s Setting" % (s[0].text, repr(s)))
                 ANNEX_FOLDER = int(s.attrib["id"])
                 break
         if int(sets.attrib["pages"]) > page:
