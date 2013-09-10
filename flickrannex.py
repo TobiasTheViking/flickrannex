@@ -145,8 +145,8 @@ def checkFile(subject, folder):
     common.log(subject + " - " + repr(folder) + " - " + repr(user_id))
 
     if not isinstance(folder, int):
-        common.log("No set exists, thus no files exists")
-        return False
+        common.log("No set exists, thus no files exists: " + repr(type(folder)))
+        #return False
 
     org_sub = subject
 
@@ -172,6 +172,7 @@ def checkFile(subject, folder):
     if file:
         common.log("Found: " + repr(file))
         print(org_sub)
+        return True
     else:
         common.log("Failure")
         return False
@@ -336,7 +337,7 @@ def main():
         for s in sets.findall('photoset'):
             common.log("Photoset %s found: %s" % (s[0].text, repr(s)))
             if s[0].text == conf["folder"]:
-                common.log("Photoset %s found: %s Setting" % (s[0].text, repr(s)))
+                common.log("Photoset %s found: %s Setting" % (s[0].text, repr(s[0].text), repr(s.attrib["id"])))
                 ANNEX_FOLDER = int(s.attrib["id"])
                 break
         if int(sets.attrib["pages"]) > page:
