@@ -6,7 +6,7 @@ import time
 import inspect
 
 conf = False
-version = "0.1.8"
+version = "0.1.9"
 plugin = "flickrannex-" + version
 
 pwd = os.path.dirname(__file__)
@@ -24,6 +24,12 @@ if "--directories-as-tags" in sys.argv:
     dirtags = 1
 else:
     dirtags = 0
+
+if "--configfile" in sys.argv:
+    configfile = sys.argv[sys.argv.index("--configfile") + 1]
+else:
+    configfile = pwd + "/flickrannex.conf"
+        
 
 import CommonFunctions as common
 import flickrapi
@@ -127,7 +133,7 @@ def postFile(subject, filename, folder, git_top_level):
                         callback=func)
 
     if len(res):
-        if not isinstance(folder, int) and not isinstance(folder, long):
+        if isinstance(folder, int) or isinstance(folder, long):
             flickr.photosets_addPhoto(photoset_id=folder, photo_id=res[0].text)
         else:
             flickr.photosets_create(title=folder, primary_photo_id=res[0].text)
@@ -141,6 +147,38 @@ def postFile(subject, filename, folder, git_top_level):
         print("Failed to store: " + repr(res))
         sys.exit(1)
 
+def findFile(subject, folder, root=False):
+    common.log(subject + " - " + repr(folder) + " - " + repr(user_id))
+    file = False
+    page=1
+    while not file:
+        common.log("Trying page: " + repr(page))
+        if root:
+            photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500, page=page)
+        else:
+            photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500, page=page)
+        photos = photos.find("photoset")
+        for s in photos.findall('photo'):
+            ttitle = s.attrib["title"]
+            common.log("Found title: " + repr(ttitle), 2)
+            if ttitle == subject:
+                if root:
+                    file = ttitle
+                else:
+                    file = long(s.attrib["id"])
+
+                common.log("Done: " + repr(file))
+                return file
+
+        if int(photos.attrib["pages"]) > page:
+            page +=1
+        else:
+            common.log("Error, found nothing:" + repr(photos))
+            common.log("Error, found nothing:" + repr(photos.attrib))
+            break
+    common.log("Failure: " + repr(file))
+    return False
+
 def checkFile(subject, folder):
     common.log(subject + " - " + repr(folder) + " - " + repr(user_id))
 
@@ -150,24 +188,7 @@ def checkFile(subject, folder):
 
     org_sub = subject
 
-    file = False
-    page=1
-    while not file:
-        photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500, page=page)
-        photos = photos.find("photoset")
-        for s in photos.findall('photo'):
-            title = s.attrib["title"]
-            common.log("Found title: " + repr(title), 3)
-            if title == subject:
-                file = title
-                break
-        if int(photos.attrib["pages"]) > page:
-            page +=1
-            common.log("Trying page: " + repr(page))
-        else:
-            common.log("Error, found nothing:" + repr(photos))
-            common.log("Error, found nothing:" + repr(photos.attrib))
-            break
+    file = findFile(subject, folder)
 
     if file:
         common.log("Found: " + repr(file))
@@ -180,25 +201,7 @@ def checkFile(subject, folder):
 def getFile(subject, filename, folder):
     common.log(subject)
 
-    file = False
-    page=1
-    while not file:
-        photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500, page=page)
-        photos = photos.find("photoset")
-        for s in photos.findall('photo'):
-            title = s.attrib["title"]
-            common.log("Found title: " + repr(title), 2)
-            if title == subject:
-                common.log("Found title2: " + repr(title), 0)
-                file = s.attrib["id"]
-                break
-        if int(photos.attrib["total"]) > page:
-            page +=1
-            common.log("Trying page: " + repr(page) + " - " + repr(photos.attrib))
-        else:
-            common.log("Error. found nothing:" + repr(photos))
-            common.log("Error. found nothing:" + repr(photos.attrib))
-            break
+    file = findFile(subject, folder)
 
     if file:
         url = flickr.photos_getSizes(photo_id=file)
@@ -225,32 +228,13 @@ def getFile(subject, filename, folder):
 def deleteFile(subject, folder):
     common.log(subject + " - " + repr(folder))
 
-    file = False
-    page=1
-    while not file:
-        photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500)
-        photos = photos.find('photoset')
-        for s in photos.findall('photo'):
-            title = s.attrib["title"]
-            common.log("Found title: " + repr(title), 0)
-            if title == subject:
-                file = s.attrib["id"]
-                break
-        if int(photos.attrib["pages"]) > page:
-            page +=1
-            common.log("Trying page: " + repr(page))
-        else:
-            common.log("Error. found nothing:" + repr(photos))
-            common.log("Error. found nothing:" + repr(photos.attrib))
-            break
-
-    common.log("file: " + repr(file))
+    file = findFile(subject, folder)
 
     if file:
         res = flickr.photos_delete(photo_id=file)
         common.log("Done: " + repr(res))
     else:
-        common.log("Failure")
+        common.log("Failure: " + repr(file))
 
 def readFile(fname, flags="r"):
     common.log(repr(fname) + " - " + repr(flags))
@@ -302,8 +286,7 @@ def main():
         envargs += ["GIT_TOP_LEVEL=" + GIT_TOP_LEVEL]
     common.log("ARGS: " + repr(" ".join(envargs + args)))
 
-
-    conf = readFile(pwd + "/flickrannex.conf")
+    conf = readFile(configfile)
     try:
         conf = json.loads(conf)
     except Exception as e:
@@ -314,6 +297,7 @@ def main():
     common.log("Conf: " + repr(conf), 2)
     changed = False
     if "uname" not in conf:
+        common.log("Asking user for email address")
         print("Please make sure your email address has been associated flickr.")
         conf["uname"] = raw_input("Please enter your flickr email address: ")
         common.log("e-mail set to: " + conf["uname"])
@@ -321,6 +305,7 @@ def main():
 
     if "encrypted" not in conf:
         conf["encrypted"] = "?"
+        common.log("Asking user for encryption")
         while (conf["encrypted"].lower().find("y") == -1 and conf["encrypted"].lower().find("n") == -1 ):
             conf["encrypted"] = raw_input("Should uploaded files be encrypted [yes/no]: ")
         conf["encrypted"] = conf["encrypted"].lower().find("y") > -1
@@ -330,18 +315,18 @@ def main():
     login(conf["uname"])
     ANNEX_FOLDER = conf["folder"]
     page=1
+    common.log("Photoset %s searching for %s" % (repr(ANNEX_FOLDER), repr(conf["folder"])))
     while ANNEX_FOLDER == conf["folder"]:
-        common.log("Photoset %s searching for %s" % (repr(ANNEX_FOLDER), repr(conf["folder"])))
+        common.log("Trying page: " + repr(page))
         sets = flickr.photosets_getList(per_page=500)
         sets = sets.find('photosets')
         for s in sets.findall('photoset'):
             if s[0].text == conf["folder"]:
-                common.log("Photoset %s found: %s Setting." % (s[0].text, repr(s[0].text)))
-                ANNEX_FOLDER = int(s.attrib["id"])
+                common.log("Photoset %s found: %s" % (s[0].text, repr(s[0].text)))
+                ANNEX_FOLDER = long(s.attrib["id"])
                 break
         if int(sets.attrib["pages"]) > page:
             page +=1
-            common.log("Trying page: " + repr(page))
         else:
             common.log("Error. found nothing:" + repr(sets.attrib))
             break

@@ -1,3 +1,7 @@
+# Version 0.1.9
+  - Refactor
+  - Support --configfile 
+
 # Version 0.1.8
   - Bugfix (set id can be long as well as int)
 
