@@ -337,7 +337,7 @@ def main():
         for s in sets.findall('photoset'):
             common.log("Photoset %s found: %s" % (s[0].text, repr(s)))
             if s[0].text == conf["folder"]:
-                common.log("Photoset %s found: %s Setting" % (s[0].text, repr(s[0].text), repr(s.attrib["id"])))
+                common.log("Photoset %s found: %s Setting. %s" % (s[0].text, repr(s[0].text), repr(s.attrib["id"])))
                 ANNEX_FOLDER = int(s.attrib["id"])
                 break
         if int(sets.attrib["pages"]) > page:
