@@ -6,7 +6,7 @@ import time
 import inspect
 
 conf = False
-version = "0.1.9"
+version = "0.1.10"
 plugin = "flickrannex-" + version
 
 pwd = os.path.dirname(__file__)
@@ -19,11 +19,6 @@ if "--dbglevel" in sys.argv:
     dbglevel = int(sys.argv[sys.argv.index("--dbglevel") + 1])
 else:
     dbglevel = 0
-
-if "--directories-as-tags" in sys.argv:
-    dirtags = 1
-else:
-    dirtags = 0
 
 if "--configfile" in sys.argv:
     configfile = sys.argv[sys.argv.index("--configfile") + 1]
@@ -75,9 +70,6 @@ def verifyFileType(filename):
 def postFile(subject, filename, folder, git_top_level):
     common.log("%s to %s - %s" % ( filename, repr(folder), subject))
 
-    if git_top_level:
-        common.log("git top level directory: %s" % git_top_level)
-
     def func(progress, done):
         common.log("func: %s - %s" % (repr(progress), repr(done)))
         if len(done):
@@ -91,6 +83,7 @@ def postFile(subject, filename, folder, git_top_level):
         print("%s size: %s more than %s. Skipping" % ( filename, os.path.getsize(filename), upper_limit))
         sys.exit(1)
 
+    tags = []
     if conf["encrypted"]:
         tfile = pwd + "/temp/encoded-" + subject
         f = open(tfile, 'wb')
@@ -103,28 +96,12 @@ def postFile(subject, filename, folder, git_top_level):
     else:
         tfile = filename
 
-    # If we want to use directories as tags...
-    tags = []
-    if dirtags:
-        dirpath = os.path.relpath(os.path.dirname(tfile), git_top_level)
-
-        # Thank you StackOverflow
-        #   http://stackoverflow.com/questions/3167154/how-to-split-a-dos-path-into-its-components-in-python
-        while 1:
-            dirpath,dir = os.path.split(dirpath)
-
-            if dir != "":
-                tags.append(dir)
-            else:
-                break
-
-        # Handle the case of indirect repos
-        #  - indirect repos have ".git" as the first subdirectory (never will happen for a direct repo)
-        #  - this will mean that don't know what the filename is in that case, so don't use any tags
-        if (len(tags) > 0) and (tags[len(tags) - 1] == ".git"):
-            tags = []
-
-        common.log("Tags added to photo" + '"' + '" "'.join(tags) + '"')
+        if git_top_level:
+            common.log("git top level directory: %s" % git_top_level)
+            dirpath = os.path.relpath(os.path.dirname(tfile), git_top_level)
+            if dirpath.find(".git") == -1:
+                tags = dirpath.split(os.sep)
+                common.log("Tags added to photo " + repr(tags))
 
     common.log("Uploading: " + tfile)
 
@@ -360,15 +337,18 @@ Please run the following commands in your annex directory:
 git config annex.flickr-hook '/usr/bin/python2 %s/flickrannex.py'
 
 # If you have a direct mode repository and want to use your directores as tags, use this hook instead
-git config annex.flickr-hook 'GIT_TOP_LEVEL=`git rev-parse --show-toplevel` /usr/bin/python2 %s/flickrannex.py --directories-as-tags'
+git config annex.flickr-hook 'GIT_TOP_LEVEL=`git rev-parse --show-toplevel` /usr/bin/python2 %s/flickrannex.py'
 
 git annex initremote flickr type=hook hooktype=flickr encryption=%s
 git annex describe flickr "the flickr library"
 git annex content flickr exclude=largerthan=30mb
+
+# If you have an unencrypted repository also use this
+git annex content flickr uuid include=*.jpg or include=*.jpeg or include=*.gif or include=*.png
 ''' % (os.getcwd(), os.getcwd(), encryption)
             print setup
-            common.log("Saving flickrannex.conf", 0)
-            saveFile(pwd + "/flickrannex.conf", json.dumps(conf))
+            common.log("Saving " + repr(configfile), 0)
+            saveFile(configfile, json.dumps(conf))
         else:
             print("Error during setup. Please try again")
     else:

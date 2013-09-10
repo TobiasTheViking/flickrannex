@@ -1,3 +1,6 @@
+# Version 0.1.10
+  - Refactor directories as tags
+	
 # Version 0.1.9
   - Refactor
   - Support --configfile 

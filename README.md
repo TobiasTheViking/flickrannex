@@ -45,7 +45,7 @@ Run the following command in your annex directory
 ## Including directories as tags
 Get get each of the directories below the top level git directory added as tags to uploads:
 
-    git config annex.flickr-hook 'GIT_TOP_LEVEL=`git rev-parse --show-toplevel` /usr/bin/python2 %s/flickrannex.py --directories-as-tags'
+    git config annex.flickr-hook 'GIT_TOP_LEVEL=`git rev-parse --show-toplevel` /usr/bin/python2 %s/flickrannex.py'
 
 In this case the image:
    /home/me/annex-photos/holidays/2013/Greenland/img001.jpg
