@@ -145,7 +145,7 @@ def checkFile(subject, folder):
     common.log(subject + " - " + repr(folder) + " - " + repr(user_id))
 
     if not isinstance(folder, int) and not isinstance(folder, long):
-        common.log("No set exists, thus no files exists: " + repr(folder) +  " - " + repr(type(folder)) + " - " + repr(type(int(folder))))
+        common.log("No set exists, thus no files exists: " + repr(folder) +  " - " + repr(type(folder)))
         return False
 
     org_sub = subject
