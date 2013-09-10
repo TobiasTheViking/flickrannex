@@ -1,3 +1,6 @@
+# Version 0.1.8
+  - Bugfix (set id can be long as well as int)
+
 # Version 0.1.7
   - Allow directories to be used as tags (--directories-as-tags)
     Directories below the top level git directory are added as tags to uploads:

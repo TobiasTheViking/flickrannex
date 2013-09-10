@@ -6,7 +6,7 @@ import time
 import inspect
 
 conf = False
-version = "0.1.7"
+version = "0.1.8"
 plugin = "flickrannex-" + version
 
 pwd = os.path.dirname(__file__)
@@ -127,7 +127,7 @@ def postFile(subject, filename, folder, git_top_level):
                         callback=func)
 
     if len(res):
-        if isinstance(folder, int):
+        if not isinstance(folder, int) and not isinstance(folder, long):
             flickr.photosets_addPhoto(photoset_id=folder, photo_id=res[0].text)
         else:
             flickr.photosets_create(title=folder, primary_photo_id=res[0].text)
@@ -144,9 +144,9 @@ def postFile(subject, filename, folder, git_top_level):
 def checkFile(subject, folder):
     common.log(subject + " - " + repr(folder) + " - " + repr(user_id))
 
-    if not isinstance(folder, int):
+    if not isinstance(folder, int) and not isinstance(folder, long):
         common.log("No set exists, thus no files exists: " + repr(folder) +  " - " + repr(type(folder)) + " - " + repr(type(int(folder))))
-        #return False
+        return False
 
     org_sub = subject
 
