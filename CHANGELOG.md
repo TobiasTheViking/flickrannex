@@ -1,3 +1,9 @@
+# Version 0.2.0
+  - Updated to external special remote protocol
+  - Because of missing GIT_TOP_LEVEL no tags(directories) are added to pictures. A random filename is still provided.
+  - Applied a hack within the flickrapi library(flickr.upload) to make progress actually work.
+  - Setting cost to 200 for encrypted remotes. 150 for remotes with encryption=none
+
 # Version 0.1.10
   - Refactor directories as tags
 	

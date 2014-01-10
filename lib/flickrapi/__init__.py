@@ -551,7 +551,7 @@ class FlickrAPI:
         kwargs['photo_id'] = photo_id
         return self.__upload_to_form( FlickrAPI.flickr_replace_form,
                 filename, callback, **kwargs)
-        
+
     def __upload_to_form(self, form_url, filename, callback, **kwargs):
         '''Uploads a photo - can be used to either upload a new photo
         or replace an existing one.
@@ -598,7 +598,6 @@ class FlickrAPI:
         
         Returns the resulting unparsed XML from Flickr.
         '''
-
         LOG.debug("Uploading to %s" % url)
         request = urllib2.Request(url)
         request.add_data(str(body))
@@ -612,7 +611,7 @@ class FlickrAPI:
             response = urllib2.urlopen(request)
             return response.read()
 
-        def __upload_callback(percentage, done, seen_header=[False]):
+        def __upload_callback(percentage, done, seen_header=[True]):
             '''Filters out the progress report on the HTTP header'''
 
             # Call the user's progress callback when we've filtered
@@ -623,7 +622,6 @@ class FlickrAPI:
             # Remember the first time we hit 'done'.
             if done:
                 seen_header[0] = True
-
         response = reportinghttp.urlopen(request, __upload_callback)
         return response.read()
 
