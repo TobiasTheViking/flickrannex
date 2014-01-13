@@ -1,4 +1,4 @@
-flickrannex
+flickrannex 0.2.1
 =========
 
 Hook program for gitannex to use flickr as backend
